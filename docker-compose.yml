@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:stable_freqaitorch
+    # # Enable GPU Image and GPU Resources
+    # # Make sure to uncomment the whole deploy section
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    container_name: freqtrade
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # Expose api on port 8080 (localhost only)
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
+    # before enabling this.
+    ports:
+      - "127.0.0.1:8080:8080"
+    # Default command used when running `docker compose up`
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --db-url sqlite:////freqtrade/user_data/tradesv3.sqlite
+      --config /freqtrade/user_data/config.json
+      --strategy SampleStrategy
+
+  tensorboard:
+    image: freqtradeorg/freqtrade:stable_freqaitorch
+    container_name: tensorboard
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    #network_mode: "host"
+    ports:
+      - "9060:9060"
+    # Default command used when running `docker compose up` --bind_all
+    entrypoint: tensorboard
+    command: >
+      --bind_all
+      --port 9060
+      --logdir /freqtrade/user_data/models
+
+  plot:
+    image: freqtradeorg/freqtrade:stable_plot
+    container_name: freqtrade_plot
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # Expose api on port 8080 (localhost only)
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
+    # before enabling this.
+    ports:
+      - "127.0.0.1:8080:8080"
+    # Default command used when running `docker compose up`
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --db-url sqlite:////freqtrade/user_data/tradesv3.sqlite
+      --config /freqtrade/user_data/config.json
+      --strategy SampleStrategy
+
+networks:
+  proton:

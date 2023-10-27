@@ -1,0 +1,5 @@
+user_data/plot/*.html
+user_data/backtest_results/*.json
+user_data/hyperopt_results/*.pki
+user_data/hyperopt_results/*.fthypt
+user_data/hyperopt_results/*.json
