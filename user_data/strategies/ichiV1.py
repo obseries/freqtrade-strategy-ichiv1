@@ -50,7 +50,8 @@ class ichiV1(IStrategy):
     timeframe = '1m'
 
     startup_candle_count = 96
-    process_only_new_candles = False
+    process_only_new_candles = True
+    #process_only_new_candles = False
 
     trailing_stop = False
     #trailing_stop_positive = 0.002
