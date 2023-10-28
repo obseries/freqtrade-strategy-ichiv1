@@ -47,7 +47,7 @@ class ichiV1(IStrategy):
     stoploss = -0.275 * custom_leverage
 
     # Optimal timeframe for the strategy
-    timeframe = '5m'
+    timeframe = '1m'
 
     startup_candle_count = 96
     process_only_new_candles = False
