@@ -121,7 +121,7 @@ class ichiV1(IStrategy):
         if not self.optimize or (self.buy_trend_above_senkou_level.value >= 3 or self.buy_trend_bullish_level.value >= 3):
             dataframe['trend_close_30m'] = ta.EMA(dataframe['close'], timeperiod=6)
         #if not self.optimize or (self.buy_trend_above_senkou_level.value >= 4 or self.buy_trend_bullish_level.value >= 4):
-            dataframe['trend_close_1h'] = ta.EMA(dataframe['close'], timeperiod=12)
+        dataframe['trend_close_1h'] = ta.EMA(dataframe['close'], timeperiod=12)
         #if not self.optimize or (self.buy_trend_above_senkou_level.value >= 5 or self.buy_trend_bullish_level.value >= 5):
         dataframe['trend_close_2h'] = ta.EMA(dataframe['close'], timeperiod=24)
         if not self.optimize or (self.buy_trend_above_senkou_level.value >= 6 or self.buy_trend_bullish_level.value >= 6):
