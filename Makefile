@@ -28,16 +28,22 @@ backtesting:
 	docker compose run --rm freqtrade backtesting --strategy-list ichiV1 --timeframe $(TIMEFRAME) $(TIMEFRAMEDETAIL) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json  --timerange $(TIMERANGE) --breakdown day week month > $(TIMERANGE)-$(TIMEFRAME)-results.txt && cat $(TIMERANGE)-$(TIMEFRAME)-results.txt 
 
 plot:
-	docker compose run --rm freqtrade plot-dataframe --strategy ichiV1 --timeframe $(TIMEFRAME) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json -c user_data/config-ai.json -c user_data/config-ai-$(TIMEFRAME).json --timerange $(TIMERANGE) 
+	docker compose run --rm freqtrade plot-dataframe --strategy ichiV1 --timeframe $(TIMEFRAME) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json --timerange $(TIMERANGE) 
 
 plot-profit:
-	docker compose run --rm freqtrade plot-profit --strategy ichiV1 --timeframe $(TIMEFRAME) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json -c user_data/config-ai.json -c user_data/config-ai-$(TIMEFRAME).json --timerange $(TIMERANGE) 
+	docker compose run --rm freqtrade plot-profit --strategy ichiV1 --timeframe $(TIMEFRAME) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json --timerange $(TIMERANGE) 
+
+lookahead-analysis:
+	docker compose run --rm freqtrade lookahead-analysis --strategy-list ichiV1 --timeframe $(TIMEFRAME) $(TIMEFRAMEDETAIL) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json  --timerange $(TIMERANGE) --breakdown day week month > $(TIMERANGE)-$(TIMEFRAME)-results.txt && cat $(TIMERANGE)-$(TIMEFRAME)-results.txt 
+
+recursive-analysis:
+	docker compose run --rm freqtrade recursive-analysis -p BTC/USDT --strategy ichiV1 --timeframe $(TIMEFRAME) $(TIMEFRAMEDETAIL) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json  --timerange $(TIMERANGE)  > $(TIMERANGE)-$(TIMEFRAME)-results.txt && cat $(TIMERANGE)-$(TIMEFRAME)-results.txt 
+
 
 generate-results: backtesting plot plot-profit
 	mkdir user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/
-	mkdir user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/models
 	mv $(TIMERANGE)-$(TIMEFRAME)-results.txt user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/$(TIMERANGE)-$(TIMEFRAME)-results.txt
-	mv user_data/plot/freqtrade-plot-* user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/$(TIMERANGE)-$(TIMEFRAME)-plot.html
+	mv user_data/plot/freqtrade-plot-* user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/
 	mv user_data/plot/freqtrade-profit-plot.html user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/$(TIMERANGE)-$(TIMEFRAME)-plot-profit.html
 	cp user_data/strategies/* user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/
 	cp user_data/config*.json user_data/results/$(NOW)-$(TIMERANGE)-$(TIMEFRAME)$(CURRENCY)/
@@ -45,10 +51,18 @@ generate-results: backtesting plot plot-profit
 
 
 generate-results-5m: TIMEFRAME=5m
+generate-results-5m: TIMEFRAMEDETAIL=--timeframe-detail 1m
 generate-results-5m: generate-results
 
 generate-results-3m: TIMEFRAME=3m
+generate-results-3m: TIMEFRAMEDETAIL=--timeframe-detail 1m
 generate-results-3m: generate-results
+
+## All Only
+
+generate-results-all: CURRENCY=-all
+generate-results-all: generate-results
+
 
 ## BTC Only
 
@@ -71,4 +85,14 @@ generate-results-sol-3m: generate-results-sol
 
 generate-results-sol-5m: TIMEFRAME=5m
 generate-results-sol-5m: generate-results-sol
+
+hyperopt:
+# non deve usare lo stesso timerange del backtest (al massimo si deve sovrapporre)
+	docker compose run --rm freqtrade hyperopt --hyperopt-loss SortinoHyperOptLoss --job-workers -2 -e 500 --spaces buy sell roi stoploss --strategy ichiV1 --timeframe $(TIMEFRAME) $(TIMEFRAMEDETAIL) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json  --timerange $(TIMERANGE)  > hyper-README.txt && cat hyper-README.txt
+
+hyperopt-20230301-20230801: TIMERANGE=20230301-20230801
+hyperopt-20230301-20230801: hyperopt
+
+hyperopt-list:
+	docker compose run --rm freqtrade hyperopt-list --profitable
 
