@@ -1,6 +1,6 @@
 # --- Do not remove these libs ---
 from freqtrade.strategy.interface import IStrategy
-from freqtrade.strategy import (BooleanParameter, CategoricalParameter, DecimalParameter, 
+from freqtrade.strategy import (CategoricalParameter, DecimalParameter, 
                                 IntParameter)
 from pandas import DataFrame
 import talib.abstract as ta
@@ -11,7 +11,6 @@ import technical.indicators as ftt
 from functools import reduce
 from datetime import datetime, timedelta
 from freqtrade.strategy import merge_informative_pair
-import numpy as np
 from freqtrade.strategy import stoploss_from_open
 from typing import Dict, Optional, Union
 
@@ -26,25 +25,25 @@ class ichiV1(IStrategy):
         #"buy_min_fan_magnitude_gain": 1.002 # NOTE: Good value (Win% ~70%), alot of trades
         #"buy_min_fan_magnitude_gain": 1.008 # NOTE: Very save value (Win% ~90%), only the biggest moves 1.008,
 
-    buy_trend_above_senkou_level = IntParameter(1,8, default=1, space="buy")
+    buy_trend_above_senkou_level = IntParameter(1,8, default=5, space="buy")
     buy_trend_bullish_level = IntParameter(1,8, default=6, space="buy")
-    buy_fan_magnitude_shift_value = IntParameter(1,8, default=3, space="buy")
+    buy_fan_magnitude_shift_value = IntParameter(1,8, default=5, space="buy")
     buy_min_fan_magnitude_gain = DecimalParameter(0.980, 1.020, default=1.002, space="buy")
     
     # Sell hyperspace params:
     # NOTE: was 15m but kept bailing out in dryrun
-    sell_trend_indicator = CategoricalParameter(["trend_close_5m", "trend_close_15m", "trend_close_30m", "trend_close_1h", "trend_close_2h", "trend_close_4h", "trend_close_6h", "trend_close_8h"], default="trend_close_2h", space="sell")
+    sell_trend_indicator = CategoricalParameter(["trend_close_5m", "trend_close_15m", "trend_close_30m", "trend_close_1h", "trend_close_2h", "trend_close_4h", "trend_close_6h", "trend_close_8h"], default="trend_close_15m", space="sell")
 
     # ROI table:
     minimal_roi = {
-        "0": 0.059 * custom_leverage,
-        "10": 0.037 * custom_leverage,
-        "41": 0.012 * custom_leverage,
-        "114": 0 * custom_leverage
+        "0": 0.061 * custom_leverage,
+        "3": 0.023 * custom_leverage,
+        "6": 0.008 * custom_leverage,
+        "19": 0 * custom_leverage
     }
 
     # Stoploss:
-    stoploss = -0.275 * custom_leverage
+    stoploss = -0.217 * custom_leverage
 
     # Optimal timeframe for the strategy
     timeframe = '1m'
