@@ -56,8 +56,8 @@ class ichiV1(IStrategy):
 
     startup_candle_count = 130
     #startup_candle_count = 96
-    process_only_new_candles = True
-    #process_only_new_candles = False
+    #process_only_new_candles = True
+    process_only_new_candles = False
 
     trailing_stop = False
     #trailing_stop_positive = 0.002
@@ -131,10 +131,10 @@ class ichiV1(IStrategy):
         logger.info(f"START populate_indicators : {metadata['pair']}")
         
         heikinashi = qtpylib.heikinashi(dataframe)
-        dataframe['open'] = heikinashi['open']
+        dataframe['hk_open'] = heikinashi['open']
         #dataframe['close'] = heikinashi['close']
-        dataframe['high'] = heikinashi['high']
-        dataframe['low'] = heikinashi['low']
+        #dataframe['hk_high'] = heikinashi['high']
+        #dataframe['hk_low'] = heikinashi['low']
 
         dataframe['trend_close_5m'] = dataframe['close']
         
@@ -155,21 +155,21 @@ class ichiV1(IStrategy):
 
 
         if not self.optimize or (self.buy_trend_bullish_level.value >= 1):
-            dataframe['trend_open_5m'] = dataframe['open']
+            dataframe['trend_open_5m'] = dataframe['hk_open']
         if not self.optimize or (self.buy_trend_bullish_level.value >= 2):
-            dataframe['trend_open_15m'] = ta.EMA(dataframe['open'], timeperiod=3)
+            dataframe['trend_open_15m'] = ta.EMA(dataframe['hk_open'], timeperiod=3)
         if not self.optimize or (self.buy_trend_bullish_level.value >= 3):
-            dataframe['trend_open_30m'] = ta.EMA(dataframe['open'], timeperiod=6)
+            dataframe['trend_open_30m'] = ta.EMA(dataframe['hk_open'], timeperiod=6)
         if not self.optimize or (self.buy_trend_bullish_level.value >= 4):
-            dataframe['trend_open_1h'] = ta.EMA(dataframe['open'], timeperiod=12)
+            dataframe['trend_open_1h'] = ta.EMA(dataframe['hk_open'], timeperiod=12)
         if not self.optimize or (self.buy_trend_bullish_level.value >= 5):
-            dataframe['trend_open_2h'] = ta.EMA(dataframe['open'], timeperiod=24)
+            dataframe['trend_open_2h'] = ta.EMA(dataframe['hk_open'], timeperiod=24)
         if not self.optimize or (self.buy_trend_bullish_level.value >= 6):
-            dataframe['trend_open_4h'] = ta.EMA(dataframe['open'], timeperiod=48)
+            dataframe['trend_open_4h'] = ta.EMA(dataframe['hk_open'], timeperiod=48)
         if not self.optimize or (self.buy_trend_bullish_level.value >= 7):
-            dataframe['trend_open_6h'] = ta.EMA(dataframe['open'], timeperiod=72)
+            dataframe['trend_open_6h'] = ta.EMA(dataframe['hk_open'], timeperiod=72)
         if not self.optimize or (self.buy_trend_bullish_level.value >= 8):
-            dataframe['trend_open_8h'] = ta.EMA(dataframe['open'], timeperiod=96)
+            dataframe['trend_open_8h'] = ta.EMA(dataframe['hk_open'], timeperiod=96)
 
         dataframe['fan_magnitude'] = (dataframe['trend_close_1h'] / dataframe['trend_close_8h'])
         dataframe['fan_magnitude_gain'] = dataframe['fan_magnitude'] / dataframe['fan_magnitude'].shift(1)
