@@ -1,4 +1,4 @@
-# --- Do not remove these libs ---
+import logging
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy import (CategoricalParameter, DecimalParameter, 
                                 IntParameter)
@@ -14,8 +14,14 @@ from freqtrade.strategy import merge_informative_pair
 from freqtrade.strategy import stoploss_from_open
 from typing import Dict, Optional, Union
 
+logger = logging.getLogger(__name__)
 
 class ichiV1(IStrategy):
+
+    INTERFACE_VERSION = 3
+
+    def version(self) -> str:
+        return "v0.0.001"
 
     # Futures
     custom_leverage = 1.0
@@ -104,10 +110,26 @@ class ichiV1(IStrategy):
         self.optimize = self.config['runmode'].value in ('live', 'dry_run')        
         
         self.custom_leverage = self.config['custom_leverage']
+        
+        logger.info(f"--> runmode: {self.config['runmode'].value} | custom_leverage: {self.custom_leverage} ")
+
+
+    def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
+        """
+        Called at the start of the bot iteration (one loop).
+        Might be used to perform pair-independent tasks
+        (e.g. gather some remote resource for comparison)
+        :param current_time: datetime object, containing the current datetime
+        :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
+        """
+        
+        logger.info(" bot_loop_start ")
 
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
+        logger.info(f"START populate_indicators : {metadata['pair']}")
+        
         heikinashi = qtpylib.heikinashi(dataframe)
         dataframe['open'] = heikinashi['open']
         #dataframe['close'] = heikinashi['close']
@@ -165,12 +187,16 @@ class ichiV1(IStrategy):
         #dataframe['cloud_red'] = ichimoku['cloud_red']
 
         #dataframe['atr'] = ta.ATR(dataframe)
+        
+        logger.info(f"END   populate_indicators : {metadata['pair']}")
 
         return dataframe
 
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
+        logger.info(f"START populate_entry_trend : {metadata['pair']}")
+        
         conditions = []
 
         # Trending market
@@ -242,6 +268,8 @@ class ichiV1(IStrategy):
             dataframe.loc[
                 reduce(lambda x, y: x & y, conditions),
                 'enter_long'] = 1
+
+        logger.info(f"END   populate_entry_trend : {metadata['pair']}")
 
         return dataframe
 

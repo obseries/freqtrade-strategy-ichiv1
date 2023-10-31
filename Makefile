@@ -86,6 +86,8 @@ generate-results-sol-3m: generate-results-sol
 generate-results-sol-5m: TIMEFRAME=5m
 generate-results-sol-5m: generate-results-sol
 
+## Hyperopt
+
 hyperopt:
 # non deve usare lo stesso timerange del backtest (al massimo si deve sovrapporre)
 	docker compose run --rm freqtrade hyperopt --hyperopt-loss SortinoHyperOptLoss --job-workers -2 -e 500 --spaces buy sell roi stoploss --strategy ichiV1 --timeframe $(TIMEFRAME) $(TIMEFRAMEDETAIL) -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json  --timerange $(TIMERANGE)  > hyper-README.txt && cat hyper-README.txt
@@ -96,3 +98,8 @@ hyperopt-20230301-20230801: hyperopt
 hyperopt-list:
 	docker compose run --rm freqtrade hyperopt-list --profitable
 
+
+## Dry run
+
+dry-run:
+	docker compose run --rm freqtrade trade --strategy ichiV1 -c user_data/config.json -c user_data/exchange-binance$(CURRENCY).json
