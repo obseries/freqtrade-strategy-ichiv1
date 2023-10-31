@@ -1,5 +1,6 @@
 {
   "timeframe": "1m",
+  "custom_leverage": 1,
   "internals": {
       "process_throttle_secs": 5
   },
