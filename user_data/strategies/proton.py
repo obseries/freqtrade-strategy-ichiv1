@@ -715,156 +715,157 @@ class Proton(IStrategy):
         # based strategy.
 
         dataframe = self.freqai.start(dataframe, metadata, self)
-        
-        #######################################################
-        # Verifica predizione
-        #######################################################
+
+        if self.dp.runmode == RunMode.BACKTEST:
+            #######################################################
+            # Verifica predizione
+            #######################################################
 
 
-        #( (valore finale - valore originale) / valore originale) x 100%
+            #( (valore finale - valore originale) / valore originale) x 100%
 
-        #todo rivedere questo calcolo
-        dataframe["perc-price-variation"] = dataframe["close"].pct_change(periods=self.num_label_1) * 100
+            #todo rivedere questo calcolo
+            dataframe["perc-price-variation"] = dataframe["close"].pct_change(periods=self.num_label_1) * 100
 
-        dataframe["perc-price-variation-abs"] = abs(dataframe["perc-price-variation"])
-        dataframe['perc-price-variation-soglia-1'] = abs(self.prediction_diff_perc_1 * 100)
-        dataframe['perc-price-variation-soglia-2'] = abs(self.prediction_diff_perc_2 * 100)
-        
-        dataframe.loc[
-            (
+            dataframe["perc-price-variation-abs"] = abs(dataframe["perc-price-variation"])
+            dataframe['perc-price-variation-soglia-1'] = abs(self.prediction_diff_perc_1 * 100)
+            dataframe['perc-price-variation-soglia-2'] = abs(self.prediction_diff_perc_2 * 100)
+
+            dataframe.loc[
                 (
-                (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
-                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '1') &
-                (dataframe['do_predict'].shift(self.num_label_1) == 1)
-                ) |
-                (
-                (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
-                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '2') &
-                (dataframe['do_predict'].shift(self.num_label_1) == 1)
-                ) |
-                (
-                (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
-                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-1') &
-                (dataframe['do_predict'].shift(self.num_label_1) == 1)
-                ) |
-                (
-                (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
-                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-2') &
-                (dataframe['do_predict'].shift(self.num_label_1) == 1)
-                ) |
-                (
-                (dataframe["perc-price-variation"] <= dataframe['perc-price-variation-soglia-1']) &
-                (dataframe["perc-price-variation"] >= -dataframe['perc-price-variation-soglia-1']) &
-                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '0') &
-                (dataframe['do_predict'].shift(self.num_label_1) == 1)
-                ) |
-                (dataframe['do_predict'].shift(self.num_label_1) < 1)
-            ) & dataframe["DI_values"] > 0,
-            'prediction'
-                      ] = 1
-
-        dataframe.loc[np.isnan(dataframe["prediction"]), 'prediction'] = 0
-        #dataframe.loc[
-        #    (
-        #        ((dataframe["perc-price-variation"] < dataframe['perc-price-variation-soglia-1']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '1') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
-        #        ((dataframe["perc-price-variation"] < dataframe['perc-price-variation-soglia-2']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '2') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
-        #        ((dataframe["perc-price-variation"] > -dataframe['perc-price-variation-soglia-1']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-1') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
-        #        ((dataframe["perc-price-variation"] > -dataframe['perc-price-variation-soglia-2']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-2') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
-        #        (((dataframe["perc-price-variation"] > dataframe['perc-price-variation-soglia-1']) | (dataframe["perc-price-variation"] < -dataframe['perc-price-variation-soglia-1'])) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '0') & (dataframe['do_predict'].shift(self.num_label_1) == 1))
-        #    ),'prediction'] = 0
-
-        dataframe.loc[
-            (dataframe["DI_values"] > 0), 'prediction_index_calc'
-        ] = 1
-        dataframe['prediction_index'] = dataframe['prediction_index_calc'].cumsum() - dataframe['prediction_index_calc']
-        dataframe['prediction_sum'] = dataframe['prediction'].cumsum() - dataframe['prediction']
-        dataframe['prediction_error'] = dataframe['prediction_index'] - dataframe['prediction_sum']
-        dataframe['prediction_error-pct'] = (dataframe['prediction_sum'] / dataframe['prediction_index']) * 100
-        #######################################################
-        # Only prediction movement
-        #
-        dataframe.loc[
-            ((dataframe['prediction_index_calc'] == 1) &
-             (abs(dataframe["perc-price-variation"]) > abs(dataframe['perc-price-variation-soglia-1']))) & dataframe["DI_values"] > 0,
-            'prediction_mov_index_calc'] = 1
-        dataframe.loc[np.isnan(dataframe["prediction_mov_index_calc"]), 'prediction_mov_index_calc'] = 0
-        dataframe['prediction_mov_index'] = dataframe['prediction_mov_index_calc'].cumsum() - dataframe['prediction_mov_index_calc']
-
-        dataframe.loc[
-            (
                     (
-                            (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
-                            (dataframe['&s-up_or_down'].shift(self.num_label_1) == '1') &
-                            (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                    (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
+                    (dataframe['&s-up_or_down'].shift(self.num_label_1) == '1') &
+                    (dataframe['do_predict'].shift(self.num_label_1) == 1)
                     ) |
                     (
-                            (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
-                            (dataframe['&s-up_or_down'].shift(self.num_label_1) == '2') &
-                            (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                    (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
+                    (dataframe['&s-up_or_down'].shift(self.num_label_1) == '2') &
+                    (dataframe['do_predict'].shift(self.num_label_1) == 1)
                     ) |
                     (
-                            (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
-                            (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-1') &
-                            (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                    (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
+                    (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-1') &
+                    (dataframe['do_predict'].shift(self.num_label_1) == 1)
                     ) |
                     (
-                            (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
-                            (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-2') &
-                            (dataframe['do_predict'].shift(self.num_label_1) == 1)
-                    )
-            ),
-            'prediction_mov'
-        ] = 1
-        dataframe.loc[np.isnan(dataframe["prediction_mov"]), 'prediction_mov'] = 0
-        dataframe['prediction_mov_sum'] = dataframe['prediction_mov'].cumsum() - dataframe['prediction_mov']
-        # numero di errori di predizione e/o predizioni mancanti
-        dataframe['prediction_mov_error'] = dataframe['prediction_mov_index'] - dataframe['prediction_mov_sum']
-        # percentuale di correttezza di predizioni (quelle mancanti sono conteggiate errate)
-        dataframe['prediction_mov_error-pct'] = (dataframe['prediction_mov_sum'] / dataframe['prediction_mov_index']) * 100
+                    (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
+                    (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-2') &
+                    (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                    ) |
+                    (
+                    (dataframe["perc-price-variation"] <= dataframe['perc-price-variation-soglia-1']) &
+                    (dataframe["perc-price-variation"] >= -dataframe['perc-price-variation-soglia-1']) &
+                    (dataframe['&s-up_or_down'].shift(self.num_label_1) == '0') &
+                    (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                    ) |
+                    (dataframe['do_predict'].shift(self.num_label_1) < 1)
+                ) & dataframe["DI_values"] > 0,
+                'prediction'
+                          ] = 1
 
-        ######################################################################
-        ## aggiungere solo errori fatti su predizioni di movimento effettuate
-        # tutte le righe con &s-up_or_down <> 0
-        dataframe.loc[
-            (
-             (dataframe['&s-up_or_down'].shift(self.num_label_1) != '0') &
-             (dataframe['do_predict'].shift(self.num_label_1) == 1) &
-             (dataframe["DI_values"].shift(self.num_label_1) > 0)
-            ),
-            'prediction_mov_correctness_index_calc'
-        ] = 1
-        dataframe.loc[np.isnan(dataframe["prediction_mov_correctness_index_calc"]), 'prediction_mov_correctness_index_calc'] = 0
-        dataframe['prediction_mov_correctness_index'] = dataframe['prediction_mov_correctness_index_calc'].cumsum() - dataframe['prediction_mov_correctness_index_calc']
+            dataframe.loc[np.isnan(dataframe["prediction"]), 'prediction'] = 0
+            #dataframe.loc[
+            #    (
+            #        ((dataframe["perc-price-variation"] < dataframe['perc-price-variation-soglia-1']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '1') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
+            #        ((dataframe["perc-price-variation"] < dataframe['perc-price-variation-soglia-2']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '2') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
+            #        ((dataframe["perc-price-variation"] > -dataframe['perc-price-variation-soglia-1']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-1') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
+            #        ((dataframe["perc-price-variation"] > -dataframe['perc-price-variation-soglia-2']) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-2') & (dataframe['do_predict'].shift(self.num_label_1) == 1)) |
+            #        (((dataframe["perc-price-variation"] > dataframe['perc-price-variation-soglia-1']) | (dataframe["perc-price-variation"] < -dataframe['perc-price-variation-soglia-1'])) & (dataframe['&s-up_or_down'].shift(self.num_label_1) == '0') & (dataframe['do_predict'].shift(self.num_label_1) == 1))
+            #    ),'prediction'] = 0
 
-    # se prediction_mov == 1 allora e' corretta la predizione
-        dataframe.loc[(dataframe['prediction_mov_correctness_index_calc'] == 1) & (dataframe["prediction_mov"] == 1),
-            'prediction_mov_correctness'
-        ] = 1
-        dataframe.loc[np.isnan(dataframe["prediction_mov_correctness"]), 'prediction_mov_correctness'] = 0
-        dataframe['prediction_mov_correctness_sum'] = dataframe['prediction_mov_correctness'].cumsum() - dataframe['prediction_mov_correctness']
-        # numero di errori di predizione e/o predizioni mancanti
-        dataframe['prediction_mov_correctness_error'] = dataframe['prediction_mov_correctness_index'] - dataframe['prediction_mov_correctness_sum']
-        # percentuale di correttezza di predizioni (quelle mancanti sono conteggiate errate)
-        dataframe['prediction_mov_correctness_error-pct'] = (dataframe['prediction_mov_correctness_sum'] / dataframe['prediction_mov_correctness_index']) * 100
-        # percentuale di predizioni fatte sul numero di predizioni possibili
-        dataframe['prediction_mov_done_error-pct'] = (dataframe['prediction_mov_correctness_index'] / dataframe['prediction_mov_index']) * 100
+            dataframe.loc[
+                (dataframe["DI_values"] > 0), 'prediction_index_calc'
+            ] = 1
+            dataframe['prediction_index'] = dataframe['prediction_index_calc'].cumsum() - dataframe['prediction_index_calc']
+            dataframe['prediction_sum'] = dataframe['prediction'].cumsum() - dataframe['prediction']
+            dataframe['prediction_error'] = dataframe['prediction_index'] - dataframe['prediction_sum']
+            dataframe['prediction_error-pct'] = (dataframe['prediction_sum'] / dataframe['prediction_index']) * 100
+            #######################################################
+            # Only prediction movement
+            #
+            dataframe.loc[
+                ((dataframe['prediction_index_calc'] == 1) &
+                 (abs(dataframe["perc-price-variation"]) > abs(dataframe['perc-price-variation-soglia-1']))) & dataframe["DI_values"] > 0,
+                'prediction_mov_index_calc'] = 1
+            dataframe.loc[np.isnan(dataframe["prediction_mov_index_calc"]), 'prediction_mov_index_calc'] = 0
+            dataframe['prediction_mov_index'] = dataframe['prediction_mov_index_calc'].cumsum() - dataframe['prediction_mov_index_calc']
 
-        # utilizzo iloc -2 perche' l'ultimo record non va tenuto in considerazione
-        # logger.info
-        print(f"--> Numero di candele totali: {dataframe['prediction_index'].iloc[-2]}")
-        print(f"--> Percentuale di predizioni corrette:                  {dataframe['prediction_error-pct'].iloc[-2]} % -- numero posizioni possibili: {dataframe['prediction_index'].iloc[-2]}  -- numero posizioni corrette: {dataframe['prediction_sum'].iloc[-2]} ")
-        # print(f"NB: tiene conto come errate solo quelle errate, quelle mancate sono conteggiate di default in questo caso")
+            dataframe.loc[
+                (
+                        (
+                                (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
+                                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '1') &
+                                (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                        ) |
+                        (
+                                (dataframe["perc-price-variation"] >= dataframe['perc-price-variation-soglia-1']) &
+                                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '2') &
+                                (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                        ) |
+                        (
+                                (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
+                                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-1') &
+                                (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                        ) |
+                        (
+                                (dataframe["perc-price-variation"] <= -dataframe['perc-price-variation-soglia-1']) &
+                                (dataframe['&s-up_or_down'].shift(self.num_label_1) == '-2') &
+                                (dataframe['do_predict'].shift(self.num_label_1) == 1)
+                        )
+                ),
+                'prediction_mov'
+            ] = 1
+            dataframe.loc[np.isnan(dataframe["prediction_mov"]), 'prediction_mov'] = 0
+            dataframe['prediction_mov_sum'] = dataframe['prediction_mov'].cumsum() - dataframe['prediction_mov']
+            # numero di errori di predizione e/o predizioni mancanti
+            dataframe['prediction_mov_error'] = dataframe['prediction_mov_index'] - dataframe['prediction_mov_sum']
+            # percentuale di correttezza di predizioni (quelle mancanti sono conteggiate errate)
+            dataframe['prediction_mov_error-pct'] = (dataframe['prediction_mov_sum'] / dataframe['prediction_mov_index']) * 100
 
-        # print(f"--> Percentuale di predizioni corrette (solo movimenti): {dataframe['prediction_mov_error-pct'].iloc[-2]} % -- numero posizioni possibili: {dataframe['prediction_mov_index'].iloc[-2]}  -- numero posizioni corrette: {dataframe['prediction_mov_sum'].iloc[-2]} ")
-        # print(f"NB: predizioni possibili verso quelle corrette, tiene conto come errate sia quelle mancate che quelle errate")
+            ######################################################################
+            ## aggiungere solo errori fatti su predizioni di movimento effettuate
+            # tutte le righe con &s-up_or_down <> 0
+            dataframe.loc[
+                (
+                 (dataframe['&s-up_or_down'].shift(self.num_label_1) != '0') &
+                 (dataframe['do_predict'].shift(self.num_label_1) == 1) &
+                 (dataframe["DI_values"].shift(self.num_label_1) > 0)
+                ),
+                'prediction_mov_correctness_index_calc'
+            ] = 1
+            dataframe.loc[np.isnan(dataframe["prediction_mov_correctness_index_calc"]), 'prediction_mov_correctness_index_calc'] = 0
+            dataframe['prediction_mov_correctness_index'] = dataframe['prediction_mov_correctness_index_calc'].cumsum() - dataframe['prediction_mov_correctness_index_calc']
 
-        print(f"--> Percentuale di predizioni fatte (solo movimenti):    {dataframe['prediction_mov_done_error-pct'].iloc[-2]} % -- numero predizioni possibili: {dataframe['prediction_mov_index'].iloc[-2]}  -- numero predizioni fatte: {dataframe['prediction_mov_correctness_index'].iloc[-2]} ")
+        # se prediction_mov == 1 allora e' corretta la predizione
+            dataframe.loc[(dataframe['prediction_mov_correctness_index_calc'] == 1) & (dataframe["prediction_mov"] == 1),
+                'prediction_mov_correctness'
+            ] = 1
+            dataframe.loc[np.isnan(dataframe["prediction_mov_correctness"]), 'prediction_mov_correctness'] = 0
+            dataframe['prediction_mov_correctness_sum'] = dataframe['prediction_mov_correctness'].cumsum() - dataframe['prediction_mov_correctness']
+            # numero di errori di predizione e/o predizioni mancanti
+            dataframe['prediction_mov_correctness_error'] = dataframe['prediction_mov_correctness_index'] - dataframe['prediction_mov_correctness_sum']
+            # percentuale di correttezza di predizioni (quelle mancanti sono conteggiate errate)
+            dataframe['prediction_mov_correctness_error-pct'] = (dataframe['prediction_mov_correctness_sum'] / dataframe['prediction_mov_correctness_index']) * 100
+            # percentuale di predizioni fatte sul numero di predizioni possibili
+            dataframe['prediction_mov_done_error-pct'] = (dataframe['prediction_mov_correctness_index'] / dataframe['prediction_mov_index']) * 100
 
-        print(f"--> Percentuale di predizioni corrette (solo movimenti): {dataframe['prediction_mov_correctness_error-pct'].iloc[-2]} % -- numero predizioni fatte: {dataframe['prediction_mov_correctness_index'].iloc[-2]}  -- numero posizioni corrette: {dataframe['prediction_mov_correctness_sum'].iloc[-2]} ")
-        # print(f"NB: predizioni fatte verso quelle corrette")
+            # utilizzo iloc -2 perche' l'ultimo record non va tenuto in considerazione
+            # logger.info
+            print(f"--> Numero di candele totali: {dataframe['prediction_index'].iloc[-2]}")
+            print(f"--> Percentuale di predizioni corrette:                  {dataframe['prediction_error-pct'].iloc[-2]} % -- numero posizioni possibili: {dataframe['prediction_index'].iloc[-2]}  -- numero posizioni corrette: {dataframe['prediction_sum'].iloc[-2]} ")
+            # print(f"NB: tiene conto come errate solo quelle errate, quelle mancate sono conteggiate di default in questo caso")
 
-        print(f"**** migliorare la percentuale di predizioni fatte :: {dataframe['prediction_mov_done_error-pct'].iloc[-2]} % -- il numero di predizioni dei movimenti ( {dataframe['prediction_mov_correctness_index'].iloc[-2]} ) verso le possibilità di posizioni ( {dataframe['prediction_mov_index'].iloc[-2]} ) sul totale di {dataframe['prediction_index'].iloc[-2]} candele")
-        print(f"**** migliorare la percentuale di correttezza delle predizioni dei movimenti :: {dataframe['prediction_mov_correctness_error-pct'].iloc[-2]} %  ")
+            # print(f"--> Percentuale di predizioni corrette (solo movimenti): {dataframe['prediction_mov_error-pct'].iloc[-2]} % -- numero posizioni possibili: {dataframe['prediction_mov_index'].iloc[-2]}  -- numero posizioni corrette: {dataframe['prediction_mov_sum'].iloc[-2]} ")
+            # print(f"NB: predizioni possibili verso quelle corrette, tiene conto come errate sia quelle mancate che quelle errate")
+
+            print(f"--> Percentuale di predizioni fatte (solo movimenti):    {dataframe['prediction_mov_done_error-pct'].iloc[-2]} % -- numero predizioni possibili: {dataframe['prediction_mov_index'].iloc[-2]}  -- numero predizioni fatte: {dataframe['prediction_mov_correctness_index'].iloc[-2]} ")
+
+            print(f"--> Percentuale di predizioni corrette (solo movimenti): {dataframe['prediction_mov_correctness_error-pct'].iloc[-2]} % -- numero predizioni fatte: {dataframe['prediction_mov_correctness_index'].iloc[-2]}  -- numero posizioni corrette: {dataframe['prediction_mov_correctness_sum'].iloc[-2]} ")
+            # print(f"NB: predizioni fatte verso quelle corrette")
+
+            print(f"**** migliorare la percentuale di predizioni fatte :: {dataframe['prediction_mov_done_error-pct'].iloc[-2]} % -- il numero di predizioni dei movimenti ( {dataframe['prediction_mov_correctness_index'].iloc[-2]} ) verso le possibilità di posizioni ( {dataframe['prediction_mov_index'].iloc[-2]} ) sul totale di {dataframe['prediction_index'].iloc[-2]} candele")
+            print(f"**** migliorare la percentuale di correttezza delle predizioni dei movimenti :: {dataframe['prediction_mov_correctness_error-pct'].iloc[-2]} %  ")
 
         return dataframe
 
