@@ -928,9 +928,14 @@ class Proton(IStrategy):
         # trade expired
         trade_duration = (current_time - trade.open_date_utc).seconds / 60
 
-        if trade_duration >= self.max_trade_duration:
+        if ((trade_duration >= self.max_trade_duration &
+                self.use_half_label_period_candle & current_profit > 0) |
+            (trade_duration >= self.max_trade_duration &  (not self.use_half_label_period_candle))):
             # logger.info(f"{pair} trade_expired at {current_profit*100}")
             return "trade_expired"
+
+        if trade_duration >= (self.max_trade_duration*2):
+            return "trade_expired_x2"
 
         # esco se supero la media del pct-change
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
@@ -943,7 +948,7 @@ class Proton(IStrategy):
         if current_profit > current_candle['custom_exit-target_1']*self.custom_leverage:
             return "early_profit"
 
-        if current_profit < -(current_candle['custom_exit-target_1']*self.custom_leverage*10):
+        if current_profit < -(current_candle['custom_exit-target_1']*self.custom_leverage*3):
             return "stop_loss"
 
         if self.dp.runmode == RunMode.BACKTEST:
@@ -1027,7 +1032,8 @@ class Proton(IStrategy):
             # Reject force-sells with negative profit
             # This is just a sample, please adjust to your needs
             # (this does not necessarily make sense, assuming you know when you're force-selling)
-            return False
+            #return False
+            return True
         return True
 
     ##TODO PER RISK MANAGEMENT
