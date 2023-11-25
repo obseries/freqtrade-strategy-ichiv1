@@ -928,9 +928,9 @@ class Proton(IStrategy):
         # trade expired
         trade_duration = (current_time - trade.open_date_utc).seconds / 60
 
-        if ((trade_duration >= self.max_trade_duration &
-                self.use_half_label_period_candle & current_profit > 0) |
-            (trade_duration >= self.max_trade_duration &  (not self.use_half_label_period_candle))):
+        if (((trade_duration >= self.max_trade_duration) &
+                (self.use_half_label_period_candle) & (current_profit > 0)) |
+                ((trade_duration >= self.max_trade_duration) & (not self.use_half_label_period_candle))):
             # logger.info(f"{pair} trade_expired at {current_profit*100}")
             return "trade_expired"
 
