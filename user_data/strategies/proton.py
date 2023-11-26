@@ -648,19 +648,31 @@ class Proton(IStrategy):
         if not self.dynamic_target:  # target dinamico disabilitato
 
             dataframe['&s-up_or_down'] = np.where(
-                dataframe["close"].shift(-self.num_label_1) > (dataframe["close"]*(1+self.prediction_diff_perc_1)),
+                (
+                    (dataframe["close"].shift(-self.num_label_1) > (dataframe["close"]*(1+self.prediction_diff_perc_1)))
+                    & (dataframe['high'].shift(-self.num_label_2).rolling(self.num_label_2).max() >= (dataframe["close"]*(1+self.prediction_diff_perc_1)))
+                ),
                 '1', '0')
 
             dataframe['&s-up_or_down'] = np.where(
-                dataframe["close"].shift(-self.num_label_1) > (dataframe["close"]*(1+self.prediction_diff_perc_2)),
+                (
+                        (dataframe["close"].shift(-self.num_label_1) > (dataframe["close"]*(1+self.prediction_diff_perc_2)))
+                        & (dataframe['high'].shift(-self.num_label_2).rolling(self.num_label_2).max() >= (dataframe["close"]*(1+self.prediction_diff_perc_2)))
+                ),
                 '2', dataframe['&s-up_or_down'])
 
             dataframe['&s-up_or_down'] = np.where(
-                dataframe["close"].shift(-self.num_label_1) < (dataframe["close"]*(1-self.prediction_diff_perc_1)),
+                (
+                        (dataframe["close"].shift(-self.num_label_1) < (dataframe["close"]*(1-self.prediction_diff_perc_1)))
+                        & (dataframe['low'].shift(-self.num_label_2).rolling(self.num_label_2).min() <= (dataframe["close"]*(1-self.prediction_diff_perc_1)))
+                ),
                 '-1', dataframe['&s-up_or_down'])
 
             dataframe['&s-up_or_down'] = np.where(
-                dataframe["close"].shift(-self.num_label_1) < (dataframe["close"]*(1-self.prediction_diff_perc_2)),
+                (
+                        (dataframe["close"].shift(-self.num_label_1) < (dataframe["close"]*(1-self.prediction_diff_perc_2)))
+                        & (dataframe['low'].shift(-self.num_label_2).rolling(self.num_label_2).min() <= (dataframe["close"]*(1-self.prediction_diff_perc_2)))
+                ),
                 '-2', dataframe['&s-up_or_down'])
 
         else:
